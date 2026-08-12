@@ -1,0 +1,22 @@
+# ENV File
+config/.env
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+src/tests
+
+# AI
+.vscode/
+.github/agents
+src/ai/skills
+
+# missing on landing page
+# tarsi-cloud-logo.png
+# tarsi.cloud redirect
+# docs redirect
+# feedback redirect

@@ -1,0 +1,19 @@
+{
+  "name": "playwright-bdd-and-api",
+  "version": "1.0.0",
+  "description": "This project is intended as a boilerplate for using Playwright, TypeScript, and Playwright-BDD in a structured automation setup.",
+  "main": "index.js",
+  "scripts": {
+    "test:bdd": "npx playwright-bdd && npx playwright test"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.2.0",
+    "playwright-bdd": "^9.2.0"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2"
+  }
+}
