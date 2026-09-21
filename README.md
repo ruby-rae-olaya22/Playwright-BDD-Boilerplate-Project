@@ -88,12 +88,12 @@ src/
 5. Open the project in Visual Studio Code.
 6. Install the dependencies using the commands listed above.
 
-# How to use different AI template
+# How to use different AI agent prompts
 ## Initialize the AI persona for Test Case Generator
-1. PIN or indicate the prompt file (scripts/ai/skills/test_case_generator.md) to use
+1. PIN or indicate the prompt file (my-ai-agent/prompts) to use
 2. Paste this in the chat thread wherein you'll change the Feature Name and the Functional Description
 ```textfield
-Use the test_case_generator.md
+Use the qa-test-generator.agent.md
 Please generate the test suite using the template rules for the following feature:
 FEATURE_NAME: {page}
 FUNCTIONAL_DESCRIPTION: {acceptance criteria}
