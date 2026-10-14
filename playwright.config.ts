@@ -8,8 +8,11 @@ import { defineBddConfig } from 'playwright-bdd';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load environment variables from .env
+// Load environment variables: local overrides in config/.env first,
+// then defaults from the root .env (dotenv silently skips missing files,
+// and never overrides an already-set variable, so config/.env wins).
 dotenv.config({ path: path.resolve(__dirname, 'config/.env') });
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 
 

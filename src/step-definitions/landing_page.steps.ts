@@ -1,175 +1,144 @@
 import { expect } from '@playwright/test';
 import { createBdd } from 'playwright-bdd';
-
 import { test } from '../support/fixtures';
+
 export const { Given, When, Then } = createBdd(test);
 
-// Helper to resolve string values or environment variable keys dynamically
 function getEnvValue(key: string): string {
-    return process.env[key] || key;
+  return process.env[key] || key;
 }
 
+// ---------- Given ----------
+
 Given('the user opens the landing page', async ({ pages }) => {
-    await pages.landingPage.open(getEnvValue('BASE_URL'));
+  await pages.landingPage.open(getEnvValue('BASE_URL'));
 });
 
-Then('the browser title should contain {string}', async ({ page }, keyword) => {
-    await expect(page).toHaveTitle(new RegExp(keyword));
+// ---------- Title / headings ----------
+
+Then('the browser title should contain {string}', async ({ page }, keyword: string) => {
+  await expect(page).toHaveTitle(new RegExp(keyword));
 });
 
-Then('the landing page heading should be visible', async ({ pages }) => {
-    await pages.landingPage.isHeadingVisible();
+Then('the page heading {string} should be visible', async ({ pages }, heading: string) => {
+  // Logo is an image-only link: "Sauce Demo" lives in the img alt /
+  // accessible name, not in text content, so assert alt + visibility.
+  await expect(pages.landingPage.websiteLogoLink).toBeVisible();
+  await expect(pages.landingPage.websiteLogoImage).toBeVisible();
+  await expect(pages.landingPage.websiteLogoImage).toHaveAttribute('alt', heading);
+  await expect(pages.landingPage.pageTitle).toBeVisible();
 });
 
-Then('the hero text "Budget Tracker" should be visible', async ({ pages }) => {
-    await pages.landingPage.isHeroTextVisible();
+Then('the page subtitle {string} should be visible', async ({ pages }, subtitle: string) => {
+  await expect(pages.landingPage.taglineHeading).toBeVisible();
+  await expect(pages.landingPage.taglineHeading).toContainText(subtitle);
 });
 
-Then('the landing page description should mention "Sign in with Google or Apple"', async ({ pages }) => {
-    await pages.landingPage.isDescriptionVisible();
+// ---------- Links / nav visibility ----------
+
+Then('the {string} navigation link should be visible', async ({ pages }, name: string) => {
+  await expect(pages.landingPage.getSideMenuLink(name)).toBeVisible();
 });
 
-Then('the "Download on the App Store" button should be visible', async ({ pages }) => {
-    await pages.landingPage.isDownloadOnTheAppStoreVisible();
+Then('the {string} link should be visible', async ({ pages }, name: string) => {
+  // Covers header links: Log In, Sign up, My Cart (0), Check Out
+  const headerLink = pages.landingPage.page.locator('header').getByRole('link', { name });
+  const sideLink = pages.landingPage.getSideMenuLink(name);
+  await expect(headerLink.or(sideLink).first()).toBeVisible();
 });
 
-Then('the "Get it on Google Play" button should be visible', async ({ pages }) => {
-    await pages.landingPage.isGetItOnTheGooglePlayVisible();
+Then(
+  'the product cards {string}, {string}, and {string} should be visible',
+  async ({ pages }, p1: string, p2: string, p3: string) => {
+    for (const name of [p1, p2, p3]) {
+      await expect(pages.landingPage.getProductCard(name)).toBeVisible();
+      await expect(pages.landingPage.getProductImage(name)).toBeVisible();
+    }
+  }
+);
+
+// ---------- Clicks ----------
+
+When('the user clicks the {string} navigation link', async ({ pages }, name: string) => {
+  await pages.landingPage.clickSideMenuLink(name);
 });
 
-Then('both store buttons should expose the expected labels', async ({ pages }) => {
-    const appStoreLabel = await pages.landingPage.downloadAppStoreLink.textContent();
-    const googlePlayLabel = await pages.landingPage.googlePlayLink.textContent(); 
+When('the user clicks the {string} link', async ({ pages }, name: string) => {
+  // Header-scoped first (Log In), falls back to side menu
+  const headerLink = pages.landingPage.page
+    .locator('header')
+    .getByRole('link', { name, exact: true });
+  if ((await headerLink.count()) > 0) {
+    await headerLink.first().click();
+  } else {
+    await pages.landingPage.clickSideMenuLink(name);
+  }
 });
 
-When('the user clicks the "Get it on Google Play" button', async ({ pages }) => {
-    await pages.landingPage.clickGetItOnGooglePlay();
+When('the user clicks the {string} product card', async ({ pages }, name: string) => {
+  await pages.landingPage.clickProductCard(name);
 });
 
-Then('the Google Play Store should be opened', async ({ page }) => {
-    const newTabPromise = page.context().waitForEvent('page');
-    const newPage = await newTabPromise;
-    await expect(newPage).toHaveURL(/https:\/\/play\.google\.com\/store\/apps\/details\?id=com\.tarsi\.app/);
+When('the user searches for {string}', async ({ pages }, query: string) => {
+  await pages.landingPage.searchFor(query);
 });
 
-When('the user clicks the "Download on the App Store" button', async ({ pages }) => {
-    await pages.landingPage.clickDownloadOnTheAppStore();
+// ---------- Collection / catalog ----------
+
+Then('the product collection page should be displayed', async ({ page }) => {
+  await expect(page).toHaveURL(/\/collections\/all/);
 });
 
-Then('the Apple App Store should be opened', async ({ page }) => {
-    const newTabPromise = page.context().waitForEvent('page');
-    const newPage = await newTabPromise;
-    await expect(newPage).toHaveURL(/apps\.apple\.com\/us\/app\/tarsi-budget-tracker\/id6760278399/);
+Then('the collection title or catalog layout should be visible', async ({ page }) => {
+  const title = page.getByRole('heading', { name: /catalog|collection|products/i });
+  const grid = page.locator('section.product-grid, .product-grid, #main');
+  await expect(title.or(grid).first()).toBeVisible();
 });
 
-Then('the "Sign in with Google" button should be visible', async ({ pages }) => {
-    await pages.landingPage.isSignInWithGoogleVisible();
+// ---------- About Us ----------
+
+Then('the About Us page should be displayed', async ({ page }) => {
+  await expect(page).toHaveURL(/\/pages\/about-us/);
 });
 
-Then('the "Sign in with Apple" button should be visible', async ({ pages }) => {
-    await pages.landingPage.isSignInWithAppleVisible();
+Then('the page should contain Sauce brand information', async ({ page }) => {
+  await expect(page.getByText(/Sauce/i).first()).toBeVisible();
 });
 
-Then('the "Choose JSON or CSV" button should be visible', async ({ pages }) => {
-    await pages.landingPage.isChooseJsonOrCsvVisible();
+// ---------- Product detail ----------
+
+Then('the product detail page for {string} should be displayed', async ({ page }, name: string) => {
+  const slug = name.toLowerCase().replace(/\s+/g, '-');
+  await expect(page).toHaveURL(new RegExp(`/products/${slug}`));
+  await expect(page.getByRole('heading', { name: new RegExp(name, 'i') }).first()).toBeVisible();
 });
 
-Then('the "Start with a demo" link should be visible', async ({ pages }) => {
-    await pages.landingPage.isStartWithDemoVisible();
+Then('the price {string} should be visible', async ({ page }, price: string) => {
+  await expect(page.getByText(price).first()).toBeVisible();
 });
 
-When('the user clicks the "Start with a demo" link', async ({ pages }) => {
-    await pages.landingPage.clickStartWithDemo();
+Then('the add-to-cart action should be available', async ({ page }) => {
+  const addToCart = page.getByRole('button', { name: /add to cart/i });
+  await expect(addToCart).toBeVisible();
+  await expect(addToCart).toBeEnabled();
 });
 
-Then('the demo flow should begin or the demo page should be displayed', async ({ pages }) => {
-    await pages.demoPage.isHeadingVisible();
-    await pages.demoPage.isHeroTextVisible();
+// ---------- Login ----------
+
+Then('the login page should be displayed', async ({ page }) => {
+  await expect(page).toHaveURL(/\/account\/login/);
 });
 
-When('the user clicks the "Sign in with Google" button', async ({ pages }) => {
-    await pages.landingPage.clickSignInWithGoogle();
+// ---------- Search results ----------
+
+Then('the search results page should show matching product results', async ({ page }) => {
+  await expect(page).toHaveURL(/\/search/);
+  const results = page.locator('section.product-grid, .product-grid, #main, [class*="result"]');
+  await expect(results.first()).toBeVisible();
 });
 
-Then('the Google sign-in flow or redirect should begin', async ({ page }) => {
-    // Verify that the Google sign-in page is displayed
-    await expect(page).toHaveURL(/accounts\.google\.com/);
-    const emailField = page.getByRole('textbox', { name: 'Email or phone' });
-    const accountSelector = page.getByText('Choose an account', { exact: false });
-
-    await expect(emailField.or(accountSelector)).toBeVisible({ timeout: 7000 });
+Then('the search results should include {string} or {string}', async ({ page }, p1: string, p2: string) => {
+  const first = page.getByText(new RegExp(p1, 'i')).first();
+  const second = page.getByText(new RegExp(p2, 'i')).first();
+  await expect(first.or(second).first()).toBeVisible();
 });
-
-When('the user clicks the "Sign in with Apple" button', async ({ pages }) => {
-    await pages.landingPage.clickSignInWithApple();
-});
-
-Then('the Apple sign-in flow or redirect should begin', async ({ page }) => {
-    // Verify that the Apple sign-in page is displayed
-    await expect(page).toHaveURL(/.*appleid\.apple\.com.*/);
-    const appleIdInput = page.getByRole('textbox', { name: 'Email or Phone Number' });
-    const continueButton = page.getByRole('button', { name: 'Sign in with iPhone' });
-
-    await expect(appleIdInput.or(continueButton)).toBeVisible({ timeout: 7000 });
-});
-
-When('the user clicks the "Choose JSON or CSV" button', async ({ pages }) => {
-    await pages.landingPage.clickChooseJsonOrCsv();
-});
-
-Then('a file picker or import dialog should appear', async ({ page }) => { // Try if it works
-    // 1. Set up the event listener promise (Do not use 'await' here)
-    const fileChooserPromise = page.waitForEvent('filechooser');
-
-    // 2. Trigger the action that opens the file explorer
-    await page.getByRole('button', { name: 'Upload Files' }).click();
-
-    // 3. Await the event to verify it successfully opened
-    const fileChooser = await fileChooserPromise;
-
-    // 4. (Optional) Pass files to the dialog to continue your test workflow
-    await fileChooser.setFiles('path/to/your/file.txt');
-});
-
-// When('the user logs in using an invalid credential', async ({ pages }) => {
-//   await pages.loginPage.fillCredentials({
-//     username: generateRandomText(12),
-//     password: generateRandomText(12),
-//   });
-// });
-
-// When('the user leaves {string} blank', async ({ pages }, field: string) => {
-//   await pages.loginPage.fillCredentials({
-//     username: '',
-//     password: '',
-//   });
-// });
-
-// When('the user submits the login form', async ({ pages }) => {
-//   await pages.loginPage.clickSignIn();
-// });
-
-// When('the user has not configured biometrics, the prompt text contains {string}', async ({ pages }, expectedText: string) => {
-//   await pages.loginPage.verifyBiometricPromptText(expectedText);
-// });
-
-// When('the UI displays an inline validation error for {string}', async ({ pages }, field: string) => {
-//   await pages.loginPage.verifyRequiredFieldError(pages.loginPage.txtUsername);
-//   await pages.loginPage.verifyRequiredFieldError(pages.loginPage.txtPassword);
-// });
-
-// When('the UI displays "Invalid username or password."', async ({ pages }) => {
-//   await pages.loginPage.verifyInvalidCredentialsMessage();
-// });
-
-// Then('the user is not redirected directly to the dashboard', async ({ pages }) => {
-//   await pages.loginPage.verifyNotOnDashboard();
-// });
-
-// Then('the biometric setup prompt closes', async ({ pages }) => {
-//   await pages.loginPage.verifyBiometricPromptClosed();
-// });
-
-// When('the dashboard is displayed', async ({ pages }) => {
-//   await pages.dashboardPage.verifyDashboardDisplayed();
-// });

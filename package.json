@@ -9,7 +9,8 @@
   "keywords": [],
   "type": "commonjs",
   "devDependencies": {
-    "@playwright/test": "^1.63.0",
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^26.6.5",
     "playwright-bdd": "^9.2.1"
   },
   "repository": {
@@ -21,6 +22,6 @@
   },
   "homepage": "https://github.com/ruby-rae-olaya22/Playwright-BDD-based-on-tarsi-web#readme",
   "dependencies": {
-    "dotenv": "^18.0.1"
+    "dotenv": "^18.0.7"
   }
 }

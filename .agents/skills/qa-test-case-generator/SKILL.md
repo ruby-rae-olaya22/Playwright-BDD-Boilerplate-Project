@@ -1,5 +1,5 @@
 ---
-name: QA Test Case Generator Agent
+name: qa-test-case-generator
 description: Specialized AI agent for generating production-grade, Playwright-BDD compatible Gherkin test suites, assumptions, product clarifications, and security checks.
 tools: []
 ---
