@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { expect, type Page, type Response } from '@playwright/test';
 import { createBdd } from 'playwright-bdd';
 import { test } from '../fixtures';
 
@@ -6,17 +6,37 @@ const { Given, When, Then} = createBdd(test);
 
 let lastProductsRequestUrl = '';
 let lastTypedTerm = '';
+let lastProductsResponse: Response | null = null;
+let lastCategoriesResponse: Response | null = null;
+
+async function openCatalogAndCaptureApiResponses(
+  page: Page,
+  openCatalog: () => Promise<void>,
+  waitForCatalogLoaded: () => Promise<void>,
+): Promise<void> {
+  const productsResponsePromise = page
+    .waitForResponse((response) => response.url().includes('/api/products'), { timeout: 15000 })
+    .catch(() => null);
+  const categoriesResponsePromise = page
+    .waitForResponse((response) => response.url().includes('/api/categories'), { timeout: 15000 })
+    .catch(() => null);
+
+  await openCatalog();
+  await waitForCatalogLoaded();
+
+  lastProductsResponse = await productsResponsePromise;
+  lastCategoriesResponse = await categoriesResponsePromise;
+  if (lastProductsResponse) lastProductsRequestUrl = lastProductsResponse.url();
+}
 
 // ---------- Background ----------
 
 Given('the user opens the catalog landing page', async ({ page, pages }) => {
-  const responsePromise = page
-    .waitForResponse((r) => r.url().includes('/api/products'), { timeout: 15000 })
-    .catch(() => null);
-  await pages.catalogPage.open(process.env.BASE_CATALOG_URL);
-  await pages.catalogPage.waitForCatalogLoaded();
-  const res = await responsePromise;
-  if (res) lastProductsRequestUrl = res.url();
+  await openCatalogAndCaptureApiResponses(
+    page,
+    () => pages.catalogPage.open(process.env.BASE_CATALOG_URL),
+    () => pages.catalogPage.waitForCatalogLoaded(),
+  );
 });
 
 Given('the catalog data has finished loading', async ({ pages }) => {
@@ -26,13 +46,11 @@ Given('the catalog data has finished loading', async ({ pages }) => {
 // ---------- Generic open URL ----------
 
 Given('the user opens the URL {string}', async ({ page, pages }, url: string) => {
-  const responsePromise = page
-    .waitForResponse((r) => r.url().includes('/api/products'), { timeout: 15000 })
-    .catch(() => null);
-  await pages.catalogPage.open(url);
-  await pages.catalogPage.waitForCatalogLoaded();
-  const res = await responsePromise;
-  if (res) lastProductsRequestUrl = res.url();
+  await openCatalogAndCaptureApiResponses(
+    page,
+    () => pages.catalogPage.open(url),
+    () => pages.catalogPage.waitForCatalogLoaded(),
+  );
 });
 
 Given('the user is on catalog page 2', async ({ page, pages }) => {
@@ -285,15 +303,14 @@ Then('the page should not crash', async ({ pages }) => {
 
 // ---------- API ----------
 
-Then('the products API should return status 200', async ({ page }) => {
-  const res = await page.request.get('/api/products?sort=newest&page=1&pageSize=12');
-  expect(res.status()).toBe(200);
-  console.log(res.status());
+Then('the products API should return status 200', async () => {
+  if (!lastProductsResponse) throw new Error('The catalog did not request the products API');
+  expect(lastProductsResponse.status()).toBe(200);
 });
 
-Then('the response should contain items, page, pageSize, total and totalPages', async ({ page }) => {
-  const res = await page.request.get('/api/products?sort=newest&page=1&pageSize=12');
-  const body = await res.json();
+Then('the response should contain items, page, pageSize, total and totalPages', async () => {
+  if (!lastProductsResponse) throw new Error('The catalog did not request the products API');
+  const body = await lastProductsResponse.json();
   expect(body).toHaveProperty('items');
   expect(body).toHaveProperty('page');
   expect(body).toHaveProperty('pageSize');
@@ -301,15 +318,14 @@ Then('the response should contain items, page, pageSize, total and totalPages', 
   expect(body).toHaveProperty('totalPages');
 });
 
-Then('the categories API should return status 200', async ({ page }) => {
-  const res = await page.request.get('/api/categories');
-  expect(res.status()).toBe(200);
-  console.log(res.status());
+Then('the categories API should return status 200', async () => {
+  if (!lastCategoriesResponse) throw new Error('The catalog did not request the categories API');
+  expect(lastCategoriesResponse.status()).toBe(200);
 });
 
-Then('the response should contain 5 categories', async ({ page }) => {
-  const res = await page.request.get('/api/categories');
-  const body = await res.json();
+Then('the response should contain 5 categories', async () => {
+  if (!lastCategoriesResponse) throw new Error('The catalog did not request the categories API');
+  const body = await lastCategoriesResponse.json();
   expect(Array.isArray(body)).toBe(true);
   expect(body.length).toBe(5);
 });

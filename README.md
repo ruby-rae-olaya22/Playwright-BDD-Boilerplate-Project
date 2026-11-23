@@ -48,7 +48,7 @@ BASE_URL=https://joanesquivel.github.io/the-test-automation-website/shop/catalog
 BASE_CATALOG_URL=https://joanesquivel.github.io/the-test-automation-website/shop/catalog
 ```
 
-`BASE_URL` configures Playwright's `baseURL`; `BASE_CATALOG_URL` is used by the catalog steps. The page object also has a fallback to the public catalog URL when opening the landing page.
+`BASE_URL` configures Playwright's `baseURL`, and `BASE_CATALOG_URL` is used by the catalog steps. The page object also has a fallback to the public catalog URL when opening the landing page.
 
 ## Run the tests
 
@@ -66,4 +66,4 @@ npx playwright show-report
 
 ## Continuous integration
 
-The GitHub Actions workflow runs for pushes and pull requests targeting `main` or `master`. It installs dependencies and Playwright browsers, runs `npx playwright test`, and uploads `playwright-report/` as an artifact for up to 30 days.
+The GitHub Actions workflow runs for pushes and pull requests targeting `main` or `master`. It installs dependencies and Chromium, generates and runs the BDD tests with `npm run test:bdd`, and uploads the HTML report as an artifact for up to 30 days.
