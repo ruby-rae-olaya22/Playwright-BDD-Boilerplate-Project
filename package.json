@@ -1,12 +1,30 @@
 {
-  "name": "learn-playwright-bdd",
+  "name": "playwright-bdd-catalog-tests",
   "version": "1.0.0",
-  "description": "A robust, enterprise-grade test automation framework built with **Playwright-BDD** and **TypeScript** to validate the e-commerce web application [Sauce Demo Shopify Store](https://sauce-demo.myshopify.com/).",
+  "description": "Playwright BDD end-to-end test suite for the Catalog page of The Test Automation Website, written in TypeScript with page objects, fixtures, and GitHub Actions CI.",
   "main": "index.js",
+  "homepage": "https://github.com/ruby-rae-olaya22/Playwright-BDD-Boilerplate-Project",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ruby-rae-olaya22/Playwright-BDD-Boilerplate-Project.git"
+  },
+  "author": "Ruby Rae Olaya",
+  "license": "MIT",
   "scripts": {
     "test:bdd": "bddgen && playwright test"
   },
-  "keywords": [],
+  "keywords": [
+    "playwright",
+    "playwright-bdd",
+    "bdd",
+    "gherkin",
+    "typescript",
+    "end-to-end",
+    "test-automation",
+    "cucumber",
+    "e2e",
+    "github-actions"
+  ],
   "type": "commonjs",
   "devDependencies": {
     "@playwright/test": "^1.64.1",

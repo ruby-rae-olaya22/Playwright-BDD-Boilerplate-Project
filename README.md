@@ -1,5 +1,7 @@
 # Playwright BDD Catalog Tests
 
+> **About:** A Playwright + BDD (Gherkin) end-to-end test suite for the Catalog page of The Test Automation Website, written in TypeScript with page objects, shared fixtures, and GitHub Actions CI.
+
 This repository contains a TypeScript end-to-end test suite for the Catalog page on [The Test Automation Website](https://joanesquivel.github.io/the-test-automation-website/shop/catalog). Scenarios are written in Gherkin and run with Playwright through `playwright-bdd`.
 
 ## What the tests cover
