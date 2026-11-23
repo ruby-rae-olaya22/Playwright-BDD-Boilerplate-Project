@@ -83,12 +83,25 @@ Feature: Product catalog (landing page)
     Then the pagination status should read "Page 1 of 2"
     And the URL should contain "page=1"
 
+  # ---------- Add to cart cases ----------
   @regression @positive
   Scenario: Add a product to the cart
-    When the user clicks "Add to cart" on "Quantum VR Headset"
+    When the user types "Quantum VR Headset" into the search box
+    And waits for the 300 ms debounce to elapse
+    Then the result count should read "1 product(s) found"
+    Then the user clicks "Add to cart" on "Quantum VR Headset"
     Then the cart count should increase by 1
     And the user should remain on the catalog page
+  
+  @regression @negative
+  Scenario: Prevent adding out-of-stock product to the cart
+    When the user types "Studio Condenser Microphone" into the search box
+    And waits for the 300 ms debounce to elapse
+    Then the result count should read "1 product(s) found"
+    Then the user sees "Out of stock" on "Studio Condenser Microphone"
+    Then the "Add to cart" button for "Studio Condenser Microphone" should be disabled
 
+  # ---------- Open product detail cases ----------
   @regression @positive
   Scenario: Open product details from a card
     When the user clicks the "Quantum VR Headset" product name

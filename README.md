@@ -60,6 +60,12 @@ Generate the Playwright tests from the Gherkin feature and run them:
 npm run test:bdd
 ```
 
+To run scenarios with either tag
+
+```bash
+npm run test:bdd -- --grep '@smoke|@positive'
+```
+
 Open the HTML report after a run:
 
 ```bash

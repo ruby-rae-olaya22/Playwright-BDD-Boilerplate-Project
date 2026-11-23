@@ -26,6 +26,7 @@ export class CatalogPage {
   readonly productCards: Locator;
   readonly emptyState: Locator;
   readonly clearFiltersButton: Locator;
+  readonly outOfStockErrorMessage: Locator;
 
   // ---- Pagination ----
   readonly paginationNav: Locator;
@@ -51,6 +52,9 @@ export class CatalogPage {
     this.productCards = page.locator('[data-testid^="product-card-"]');
     this.emptyState = page.getByText('No products match your filters', { exact: true });
     this.clearFiltersButton = page.getByTestId('clear-filters');
+    this.outOfStockErrorMessage = page.getByText('This product is out of stock', {
+      exact: true,
+    });
 
     this.paginationNav = page.getByTestId('catalog-pagination');
     this.paginationPrev = page.getByTestId('pagination-prev');
@@ -153,9 +157,40 @@ export class CatalogPage {
     await this.page.getByTestId(`add-to-cart-${productId}`).click();
   }
 
+  async isProductOutOfStock(productId: string): Promise<boolean> {
+    const stockLabel = await this.getStockBadge(productId).innerText();
+    return /out of stock/i.test(stockLabel.trim());
+  }
+
+  async isAddToCartDisabled(productId: string): Promise<boolean> {
+    return this.getAddToCartButton(productId).isDisabled();
+  }
+
   async clickAddToCartByName(productName: string): Promise<void> {
     const productId = await this.getProductIdByName(productName);
     await this.clickAddToCart(productId);
+  }
+
+  async clickAddToCartAndGetLabelChange(
+    productName: string,
+  ): Promise<{ before: string; after: string }> {
+    const productId = await this.getProductIdByName(productName);
+    const testId = `add-to-cart-${productId}`;
+    const button = this.getAddToCartButton(productId);
+    const before = (await button.innerText()).trim();
+
+    await button.click();
+    await this.page.waitForFunction(
+      ({ buttonTestId, previousLabel }) => {
+        const currentButton = Array.from(
+          document.querySelectorAll<HTMLElement>('[data-testid]'),
+        ).find((element) => element.dataset.testid === buttonTestId);
+        return currentButton !== undefined && currentButton.innerText.trim() !== previousLabel;
+      },
+      { buttonTestId: testId, previousLabel: before },
+    );
+
+    return { before, after: (await button.innerText()).trim() };
   }
 
   async clickProductName(productName: string): Promise<void> {

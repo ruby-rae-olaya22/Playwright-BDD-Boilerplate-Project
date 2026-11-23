@@ -4,6 +4,8 @@ import { test } from '../fixtures';
 
 const { Given, When, Then} = createBdd(test);
 
+const cartCountBeforeAddByPage = new WeakMap<Page, string>();
+
 let lastProductsRequestUrl = '';
 let lastTypedTerm = '';
 let lastProductsResponse: Response | null = null;
@@ -214,10 +216,31 @@ When('the user clicks the {string} button', async ({ pages }, name: string) => {
 
 // ---------- Cart ----------
 
-When('the user clicks {string} on {string}', async ({ pages }, action: string, productName: string) => {
-  if (action === 'Add to cart') {
-    await pages.catalogPage.clickAddToCartByName(productName);
+When('the user clicks {string} on {string}', async ({ page, pages }, action: string, productName: string) => {
+  if (action !== 'Add to cart') {
+    throw new Error(`Unsupported cart action: ${action}`);
   }
+
+  const productId = await pages.catalogPage.getProductIdByName(productName);
+  cartCountBeforeAddByPage.set(page, await pages.catalogPage.getCartCount());
+
+  if (await pages.catalogPage.isProductOutOfStock(productId)) {
+    expect(await pages.catalogPage.isAddToCartDisabled(productId)).toBe(true);
+  }
+
+  await pages.catalogPage.clickAddToCart(productId);
+});
+
+Then('the user sees {string} on {string}', async ({ pages }, text: string, productName: string) => {
+  const productId = await pages.catalogPage.getProductIdByName(productName);
+  const stockBadge = await pages.catalogPage.getStockBadge(productId);
+  await expect(stockBadge).toBeVisible();
+  await expect(stockBadge).toHaveText(text);
+});
+
+Then('the {string} button for {string} should be disabled', async ({ pages }, buttonName: string, productName: string) => {
+  const productId = await pages.catalogPage.getProductIdByName(productName);
+  expect(await pages.catalogPage.isAddToCartDisabled(productId)).toBe(true);
 });
 
 Then('the cart count should increase by 1', async ({ pages }) => {
@@ -225,6 +248,20 @@ Then('the cart count should increase by 1', async ({ pages }) => {
   // We assert the cart count is a positive number.
   const count = await pages.catalogPage.getCartCount();
   expect(parseInt(count, 10)).toBeGreaterThan(0);
+});
+
+Then('the cart count should not change', async ({ page, pages }) => {
+  const initialCount = cartCountBeforeAddByPage.get(page);
+  if (initialCount === undefined) {
+    throw new Error('Cart count baseline was not captured before the add-to-cart action');
+  }
+
+  expect(await pages.catalogPage.getCartCount()).toBe(initialCount);
+});
+
+Then('an error message {string} should be displayed', async ({ pages }, message: string) => {
+  await expect(pages.catalogPage.outOfStockErrorMessage).toBeVisible();
+  await expect(pages.catalogPage.outOfStockErrorMessage).toHaveText(message);
 });
 
 Then('the user should remain on the catalog page', async ({ page }) => {
