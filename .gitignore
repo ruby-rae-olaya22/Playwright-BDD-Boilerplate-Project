@@ -1,0 +1,16 @@
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# AI skill agents
+.agents/
+
+# Playwright-BDD Test
+.features-gen/
+test-results/
+tests/
