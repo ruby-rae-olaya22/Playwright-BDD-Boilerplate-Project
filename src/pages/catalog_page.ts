@@ -71,36 +71,43 @@ export class CatalogPage {
       process.env.BASE_URL ||
       'https://joanesquivel.github.io/the-test-automation-website/shop/catalog';
 
+    let targetUrl = base;
     if (!url || url.trim() === '' || url === '/shop/catalog') {
-      await this.page.goto(base);
-      return;
+      targetUrl = base;
+    } else if (/^https?:\/\//i.test(url)) {
+      targetUrl = url;
+    } else {
+      // Relative path or query string: resolve against BASE_URL so the
+      // hosted base path (/the-test-automation-website) is preserved.
+      const queryIndex = url.indexOf('?');
+      const query = queryIndex >= 0 ? url.slice(queryIndex) : '';
+      const hashIndex = url.indexOf('#');
+      const hash = hashIndex >= 0 ? url.slice(hashIndex) : '';
+      targetUrl = base + query + hash;
     }
 
-    if (/^https?:\/\//i.test(url)) {
-      await this.page.goto(url);
-      return;
-    }
-
-    // Relative path or query string: resolve against BASE_URL so the
-    // hosted base path (/the-test-automation-website) is preserved.
-    const queryIndex = url.indexOf('?');
-    const query = queryIndex >= 0 ? url.slice(queryIndex) : '';
-    const hashIndex = url.indexOf('#');
-    const hash = hashIndex >= 0 ? url.slice(hashIndex) : '';
-    await this.page.goto(base + query + hash);
+    await this.page.goto(targetUrl);
+    await this.waitForCatalogLoaded();
   }
 
   async waitForCatalogLoaded(): Promise<void> {
-    await this.resultCount.waitFor({ state: 'visible' });
+    await this.page.waitForFunction(() => {
+      const text = document
+        .querySelector('[data-testid="catalog-result-count"]')
+        ?.textContent?.trim();
+      return /^\d+ product\(s\) found$/.test(text ?? '');
+    });
   }
 
   // ---- Filters ----
   async search(term: string): Promise<void> {
     await this.searchBox.fill(term);
+    await this.waitForCatalogLoaded();
   }
 
   async selectSort(label: string): Promise<void> {
     await this.sortDropdown.selectOption({ label });
+    await this.waitForCatalogLoaded();
   }
 
   async selectCategory(name: string): Promise<void> {
@@ -200,13 +207,20 @@ export class CatalogPage {
 
   // ---- Resolvers ----
   async getProductIdByName(name: string): Promise<string> {
-    return this.page.evaluate((productName) => {
+    await this.waitForCatalogLoaded();
+    const productId = await this.page.evaluate((productName) => {
       const card = Array.from(document.querySelectorAll('[data-testid^="product-card-"]')).find((el) =>
         (el.textContent || '').includes(productName),
       );
-      const testId = card?.getAttribute('data-testid') || '';
-      return testId.replace('product-card-', '');
+      const testId = card?.getAttribute('data-testid');
+      return testId?.startsWith('product-card-') ? testId.slice('product-card-'.length) : null;
     }, name);
+
+    if (!productId) {
+      throw new Error(`Product "${name}" was not found in the loaded catalog`);
+    }
+
+    return productId;
   }
 
   // ---- State getters ----

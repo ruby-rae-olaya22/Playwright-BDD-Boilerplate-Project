@@ -29,7 +29,6 @@ Feature: Product catalog (landing page)
   @smoke @positive
   Scenario: Search products by keyword
     When the user types "wireless" into the search box
-    And waits for the 300 ms debounce to elapse
     Then the URL should contain "search=wireless"
     And the result count should read "2 product(s) found"
     And the product list should contain "Pulse True Wireless Earbuds"
@@ -87,7 +86,6 @@ Feature: Product catalog (landing page)
   @regression @positive
   Scenario: Add a product to the cart
     When the user types "Quantum VR Headset" into the search box
-    And waits for the 300 ms debounce to elapse
     Then the result count should read "1 product(s) found"
     Then the user clicks "Add to cart" on "Quantum VR Headset"
     Then the cart count should increase by 1
@@ -96,7 +94,6 @@ Feature: Product catalog (landing page)
   @regression @negative
   Scenario: Prevent adding out-of-stock product to the cart
     When the user types "Studio Condenser Microphone" into the search box
-    And waits for the 300 ms debounce to elapse
     Then the result count should read "1 product(s) found"
     Then the user sees "Out of stock" on "Studio Condenser Microphone"
     Then the "Add to cart" button for "Studio Condenser Microphone" should be disabled
@@ -135,7 +132,6 @@ Feature: Product catalog (landing page)
   @regression @negative
   Scenario: Search with no matching products shows empty state
     When the user types "zzzzzzzzz" into the search box
-    And waits for the 300 ms debounce to elapse
     Then the result count should read "0 product(s) found"
     And the empty state message "No products match your filters" should be visible
     And the "Clear all filters" button should be visible
@@ -154,7 +150,6 @@ Feature: Product catalog (landing page)
   @regression @negative
   Scenario: Whitespace-only search yields no matches
     When the user types "   " into the search box
-    And waits for the 300 ms debounce to elapse
     Then the result count should read "0 product(s) found"
     And the empty state should be displayed
 
@@ -163,14 +158,12 @@ Feature: Product catalog (landing page)
   @security
   Scenario: XSS payload in search is not executed
     When the user types "<script>alert(1)</script>" into the search box
-    And waits for the 300 ms debounce to elapse
     Then no JavaScript alert should be triggered
     And the search box value should be treated as plain text
 
   @security
   Scenario: SQL injection payload in search does not break the catalog
     When the user types "' OR 1=1 --" into the search box
-    And waits for the 300 ms debounce to elapse
     Then the page should not crash
     And the result count should read "0 product(s) found"
 

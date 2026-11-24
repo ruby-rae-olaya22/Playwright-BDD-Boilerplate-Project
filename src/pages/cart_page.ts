@@ -10,8 +10,8 @@ export class CartPage {
   constructor(page: Page) {
     this.page = page;
     this.cartItems = page.getByRole('region', { name: 'Cart items' });
-    this.emptyCartMessage = page.getByTestId('empty-cart-message');
-    this.addProductPrompt = page.getByText(/add .* to (your )?cart/i);
+    this.emptyCartMessage = page.getByTestId('empty-cart');
+    this.addProductPrompt = page.getByText('Add something from the catalog and it lands here.')
     this.checkoutButton = page.getByRole('button', { name: /checkout/i });
   }
 

@@ -26,6 +26,9 @@ Given('the guest user is viewing the product catalog', async ({ pages }) => {
 
 When('the guest user adds {string} to the cart', async ({ pages }, productName: string) => {
   await pages.catalogPage.clickAddToCartByName(productName);
+  await expect(pages.catalogPage.page.getByTestId('toast')).toContainText(
+    `${productName} added to your cart.`,
+  );
 });
 
 Then(
@@ -33,7 +36,6 @@ Then(
   async ({ pages }, productName: string, quantity: number) => {
     const productId = await pages.catalogPage.getProductIdByName(productName);
     await pages.cartPage.open();
-    await pages.cartPage.getCartItem(productId).evaluate(el => el.outerHTML)
     await expect(pages.cartPage.getCartItem(productId)).toBeVisible();
     await expect(pages.cartPage.getItemQuantity(productId)).toHaveValue(String(quantity));
   },

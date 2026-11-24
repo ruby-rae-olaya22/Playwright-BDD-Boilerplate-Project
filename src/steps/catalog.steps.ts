@@ -145,10 +145,7 @@ Then('the {string} button should be visible', async ({ pages }, name: string) =>
 When('the user types {string} into the search box', async ({ pages }, term: string) => {
   lastTypedTerm = term;
   await pages.catalogPage.search(term);
-});
-
-When('waits for the 300 ms debounce to elapse', async ({ page }) => {
-  await page.waitForTimeout(400);
+  await pages.catalogPage.waitForCatalogLoaded();
 });
 
 Then('the URL should contain {string}', async ({ page }, text: string) => {
@@ -286,6 +283,7 @@ Then('the product detail URL should contain {string}', async ({ page }, text: st
 
 Then('the search box should contain {string}', async ({ pages }, text: string) => {
   expect(await pages.catalogPage.getSearchValue()).toBe(text);
+    await pages.catalogPage.waitForCatalogLoaded();
 });
 
 Then('the sort dropdown should have value {string}', async ({ pages }, value: string) => {
@@ -332,6 +330,7 @@ Then('the search box value should be treated as plain text', async ({ pages }) =
   // The search input preserves the typed payload verbatim.
   const value = await pages.catalogPage.getSearchValue();
   expect(value).toBe(lastTypedTerm);
+    await pages.catalogPage.waitForCatalogLoaded();
 });
 
 Then('the page should not crash', async ({ pages }) => {
@@ -381,6 +380,7 @@ When('the user navigates the catalog page using the keyboard', async ({ page }) 
 
 Then('the search box should be reachable', async ({ pages }) => {
   await expect(pages.catalogPage.searchBox).toBeVisible();
+    await pages.catalogPage.waitForCatalogLoaded();
 });
 
 Then('the sort dropdown should be reachable', async ({ pages }) => {
